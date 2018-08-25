@@ -1,0 +1,704 @@
+# Stopwatch
+alias timer='echo "Timer started. Stop with Ctrl-D." && date && time cat && date'
+
+function parse_git_dirty() {
+  [[ $(git status 2> /dev/null | tail -n1) != *"working directory clean"* ]] && echo "*"
+}
+
+function parse_git_branch() {
+  git branch --no-color 2> /dev/null | sed -e '/^[^*]/d' -e "s/* \(.*\)/\1$(parse_git_dirty)/"
+}
+
+
+ #extract:  Extract most know archives with one command
+#   ---------------------------------------------------------
+    extract () {
+        if [ -f $1 ] ; then
+          case $1 in
+            *.tar.bz2)   tar xjf $1     ;;
+            *.tar.gz)    tar xzf $1     ;;
+            *.bz2)       bunzip2 $1     ;;
+            *.rar)       unrar e $1     ;;
+            *.gz)        gunzip $1      ;;
+            *.tar)       tar xf $1      ;;
+            *.tbz2)      tar xjf $1     ;;
+            *.tgz)       tar xzf $1     ;;
+            *.zip)       unzip $1       ;;
+            *.Z)         uncompress $1  ;;
+            *.7z)        7z x $1        ;;
+            *)     echo "'$1' cannot be extracted via extract()" ;;
+             esac
+         else
+             echo "'$1' is not a valid file"
+         fi
+    }
+
+
+
+## curlheader will return only a specific response header or all response headers for a given URL
+## usage: curlheader $header $url
+## usage: curlheader $url
+function curlheader() {
+  if [[ -z "$2" ]]; then
+    echo "curl -k -s -D - $1 -o /dev/null"
+    curl -k -s -D - $1 -o /dev/null:
+  else
+    echo "curl -k -s -D - $2 -o /dev/null | grep $1:"
+    curl -k -s -D - $2 -o /dev/null | grep $1:
+  fi
+}
+
+## get the timings for a curl to a URL
+## usage: curltime $url
+function curltime(){
+  curl -w "   time_namelookup:  %{time_namelookup}\n\
+      time_connect:  %{time_connect}\n\
+   time_appconnect:  %{time_appconnect}\n\
+  time_pretransfer:  %{time_pretransfer}\n\
+     time_redirect:  %{time_redirect}\n\
+time_starttransfer:  %{time_starttransfer}\n\
+--------------------------\n\
+        time_total:  %{time_total}\n" -o /dev/null -s "$1"
+}
+
+function fixperms(){
+    find . \( -name "*.sh" -or -type d \) -exec chmod 755 {} \; && find . -type f ! -name "*.sh" -exec chmod 644 {} \;
+}
+
+
+
+# Create a new git repo with one README commit and CD into it
+function gitnr() { mkdir $1; cd $1; git init; touch README; git add README; git commit -mFirst-commit;}
+
+# Do a Matrix movie effect of falling characters
+function matrix1() {
+echo -e "\e[1;40m" ; clear ; while :; do echo $LINES $COLUMNS $(( $RANDOM % $COLUMNS)) $(( $RANDOM % 72 )) ;sleep 0.05; done|gawk '{ letters="abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789@#$%^&*()"; c=$4; letter=substr(letters,c,1);a[$3]=0;for (x in a) {o=a[x];a[x]=a[x]+1; printf "\033[%s;%sH\033[2;32m%s",o,x,letter; printf "\033[%s;%sH\033[1;37m%s\033[0;0H",a[x],x,letter;if (a[x] >= $1) { a[x]=0; } }}'
+}
+
+function matrix2() {
+echo -e "\e[1;40m" ; clear ; characters=$( jot -c 94 33 | tr -d '\n' ) ; while :; do echo $LINES $COLUMNS $(( $RANDOM % $COLUMNS)) $(( $RANDOM % 72 )) $characters ;sleep 0.05; done|gawk '{ letters=$5; c=$4; letter=substr(letters,c,1);a[$3]=0;for (x in a) {o=a[x];a[x]=a[x]+1; printf "\033[%s;%sH\033[2;32m%s",o,x,letter; printf "\033[%s;%sH\033[1;37m%s\033[0;0H",a[x],x,letter;if (a[x] >= $1) { a[x]=0; } }}'
+}
+
+
+ #   ---------------------------
+#   SEARCHING
+#   ---------------------------
+
+
+
+
+alias qfind="find . -name "                 # qfind:    Quickly search for file
+ff () { /usr/bin/find . -name "$@" ; }      # ff:       Find file under the current directory
+ffs () { /usr/bin/find . -name "$@"'*' ; }  # ffs:      Find file whose name starts with a given string
+ffe () { /usr/bin/find . -name '*'"$@" ; }  # ffe:      Find file whose name ends with a given string
+ffreg () { /usr/bin/find . -name '*'"$@"'*' ; }  # ffreg:      Find file whose name contains given string
+
+
+# URL-encode strings
+alias urlencode='python -c "import sys, urllib as ul; print ul.quote_plus(sys.argv[1]);"'
+
+#-----------------------------------------
+#  search history of typed commands for a phrase / http://forum.manjaro.org/index.php?topic=995.0
+#-----------------------------------------
+hs() {
+        history | grep "$1"
+}
+
+
+findproc() {
+  #cmd="ps -ef | grep \$USER | grep -i \$1 | grep -v grep | awk {print \$2}"
+  #echo $cmd
+  cmd=`ps -ef | grep $USER | grep -i $1 | grep -v grep | awk '{print $2}'`
+  echo $cmd
+}
+
+alias p=findproc
+
+killproc(){
+  echo 'Finging processes ...'
+  pid=`p "$1"`
+  if [[ $pid == "" ]]; then
+    echo "$1 not found"
+    return
+  fi
+  echo "pid: "$pid
+  echo 'KILLING .. '
+  #ps aux | grep $USER | grep -i $1 | grep -v grep | awk '{print "kill -9 " $2}'
+  kill -9 $pid
+  pid=`p "$1"`
+  if [[ $pid != "" ]]; then
+    echo "$1 in $pid still found"
+    return
+  else
+    echo "DONE .. "
+  fi
+}
+
+alias ka=killproc
+
+
+# Searches for text in all files in the current folder
+ftext ()
+{
+  # -i case-insensitive
+  # -I ignore binary files
+  # -H causes filename to be printed
+  # -r recursive search
+  # -n causes line number to be printed
+  # optional: -F treat search term as a literal, not a regular expression
+  # optional: -l only print filenames and not the matching lines ex. grep -irl "$1" *
+  grep -iIHrn --color=always "$1" . | less -r
+}
+
+# Copy file with a progress bar
+cpp()
+{
+  set -e
+  strace -q -ewrite cp -- "${1}" "${2}" 2>&1 \
+  | awk '{
+  count += $NF
+  if (count % 10 == 0) {
+    percent = count / total_size * 100
+    printf "%3d%% [", percent
+    for (i=0;i<=percent;i++)
+      printf "="
+      printf ">"
+      for (i=percent;i<100;i++)
+        printf " "
+        printf "]\r"
+      }
+    }
+  END { print "" }' total_size=$(stat -c '%s' "${1}") count=0
+}
+
+# Copy and go to the directory
+cpg ()
+{
+  if [ -d "$2" ];then
+    cp $1 $2 && cd $2
+  else
+    cp $1 $2
+  fi
+}
+
+# Move and go to the directory
+mvg ()
+{
+  if [ -d "$2" ];then
+    mv $1 $2 && cd $2
+  else
+    mv $1 $2
+  fi
+}
+
+
+# Goes up a specified number of directories  (i.e. up 4)
+up ()
+{
+  local d=""
+  limit=$1
+  for ((i=1 ; i <= limit ; i++))
+    do
+      d=$d/..
+    done
+  d=$(echo $d | sed 's/^\///')
+  if [ -z "$d" ]; then
+    d=..
+  fi
+  cd $d
+}
+
+# system dependent
+if [ $LINUX ]
+then
+    # Add an "alert" alias for long running commands.  Use like so:
+    # sleep 10; alert
+   alias alert='notify-send --urgency=low -i "$([ $? = 0 ] && echo terminal || echo error)" "$(history|tail -n1|sed -e '\''s/^\s*[0-9]\+\s*//;s/[;&|]\s*alert$//'\'')"'
+fi
+
+
+
+##################################################
+# Text alignment         #
+##################################################
+
+###### center text in console with simple pipe like
+function align_center() { l="$(cat -)"; s=$(echo -e "$l"| wc -L); echo "$l" | while read l;do j=$(((s-${#l})/2));echo "$(while ((--j>0)); do printf " ";done;)$l";done;} #; ls --color=none / | center
+
+
+
+###### right-align text in console using pipe like ( command | right )
+function align_right() { l="$(cat -)"; [ -n "$1" ] && s=$1 || s=$(echo -e "$l"| wc -L); echo "$l" | while read l;do j=$(((s-${#l})));echo "$(while ((j-->0)); do printf " ";done;)$l";done;} #; ls --color=none / | right 150
+
+
+if [ $LINUX ]
+then
+    ###### clear iptables rules safely
+    function clearIptables(){
+    iptables -P INPUT ACCEPT; iptables -P FORWARD ACCEPT; iptables -P OUTPUT ACCEPT; iptables -F; iptables -X; iptables -L
+    }
+fi
+
+###### online check
+function connected() { ping -c1 -w2 google.com > /dev/null 2>&1; }
+
+###### check if a remote port is up using dnstools.com
+# (i.e. from behind a firewall/proxy)
+function cpo() { [[ $# -lt 2 ]] && echo 'need IP and port' && return 2; [[ `wget -q "http://dnstools.com/?count=3&checkp=on&portNum=$2&target=$1&submit=Go\!" -O - |grep -ic "Connected successfully to port $2"` -gt 0 ]] && echo OPEN || echo CLOSED; }
+
+
+###### geoip lookup (need geoip database: sudo apt-get install geoip-bin)
+function geoip() {
+geoiplookup $1
+}
+
+
+###### geoip information
+# requires 'html2text': sudo apt-get install html2text
+function geoiplookup() { curl -A "Mozilla/5.0" -s "http://www.geody.com/geoip.php?ip=$1" | grep "^IP.*$1" | html2text; }
+
+
+###### ifconfig connection check
+function ips()
+{
+    if [ $LINUX ]; then
+        for i in $( /sbin/ifconfig | grep ^e | awk '{print $1}' | sed 's/://' ); do echo -n "$i: ";  /sbin/ifconfig $i | perl -nle'/dr:(\S+)/ && print $1'; done
+    elif [ $OSX ]; then
+        for i in $( /sbin/ifconfig | grep ^e | awk '{print $1}' | sed 's/://' ); do echo -n "$i: ";  /sbin/ifconfig $i | perl -nle'/inet (\S+)/ && print $1'; done
+    fi
+}
+
+###### geolocate a given IP address
+function ip2loc() { wget -qO - www.ip2location.com/$1 | grep "<span id=\"dgLookup__ctl2_lblICountry\">" | sed 's/<[^>]*>//g; s/^[\t]*//; s/&quot;/"/g; s/</</g; s/>/>/g; s/&amp;/\&/g'; }
+
+
+##################################################
+# Ask            #
+##################################################
+
+function ask()
+{
+    echo -n "$@" '[y/n] ' ; read ans
+    case "$ans" in
+        y*|Y*) return 0 ;;
+        *) return 1 ;;
+    esac
+}
+
+
+##################################################
+# Escape potential tarbombs      #
+##################################################
+
+function atb() { l=$(tar tf $1); if [ $(echo "$l" | wc -l) -eq $(echo "$l" | grep $(echo "$l" | head -n1) | wc -l) ]; then tar xf $1; else mkdir ${1%.tar.gz} && tar xf $1 -C ${1%.tar.gz}; fi ; }
+
+
+##################################################
+# Creates a backup of the file passed as   #
+# parameter with the date and time     #
+##################################################
+
+function bak()
+{
+  cp $1 $1_`date +%H:%M:%S_%d-%m-%Y`
+}
+
+
+function bashtips() {
+
+cat <<EOF
+DIRECTORIES
+-----------
+~-          Previous working directory
+pushd tmp   Push tmp && cd tmp
+popd        Pop && cd
+GLOBBING AND OUTPUT SUBSTITUTION
+--------------------------------
+ls a[b-dx]e Globs abe, ace, ade, axe
+ls a{c,bl}e Globs ace, able
+\$(ls)      \`ls\` (but nestable!)
+HISTORY MANIPULATION
+--------------------
+!!        Last command
+!?foo     Last command containing \`foo'
+^foo^bar^ Last command containing \`foo', but substitute \`bar'
+!!:0      Last command word
+!!:^      Last command's first argument
+!\$       Last command's last argument
+!!:*      Last command's arguments
+!!:x-y    Arguments x to y of last command
+C-s       search forwards in history
+C-r       search backwards in history
+LINE EDITING
+------------
+M-d     kill to end of word
+C-w     kill to beginning of word
+C-k     kill to end of line
+C-u     kill to beginning of line
+M-r     revert all modifications to current line
+C-]     search forwards in line
+M-C-]   search backwards in line
+C-t     transpose characters
+M-t     transpose words
+M-u     uppercase word
+M-l     lowercase word
+M-c     capitalize word
+COMPLETION
+----------
+M-/     complete filename
+M-~     complete user name
+M-@     complete host name
+M-\$    complete variable name
+M-!     complete command name
+M-^     complete history
+EOF
+}
+
+
+##################################################
+# Execute a given Linux command on a group of files
+##################################################
+
+###### Example: batchexec sh ls   # lists all files that have the extension 'sh'
+# Example: batchexec sh chmod 755 # 'chmod 755' all files that have the extension 'sh'
+function batchexec()
+{
+find . -type f -iname '*.'${1}'' -exec ${@:2}  {} \; ;
+}
+
+
+function clock()
+{
+while true;do clear;echo "===========";date +"%r";echo "===========";sleep 1;done
+}
+
+##################################################
+# Appends a '&' to a command so it will run in   #
+# the background         #
+##################################################
+
+###### useful for aliases
+function bg_wrapper()
+{
+    "$@" &
+}
+
+##################################################
+# Substitutes underscores for blanks in all the  #
+# filenames in a directory       #
+##################################################
+
+function blank_rename()
+{
+ONE=1                     # For getting singular/plural right (see below).
+number=0                  # Keeps track of how many files actually renamed.
+FOUND=0                   # Successful return value.
+for filename in *         #Traverse all files in directory.
+do
+     echo "$filename" | grep -q " "         #  Check whether filename
+     if [ $? -eq $FOUND ]                   #+ contains space(s).
+     then
+       fname=$filename                      # Yes, this filename needs work.
+       n=`echo $fname | sed -e "s/ /_/g"`   # Substitute underscore for blank.
+       mv "$fname" "$n"                     # Do the actual renaming.
+       let "number += 1"
+     fi
+done
+if [ "$number" -eq "$ONE" ]                 # For correct grammar.
+then
+ echo "$number file renamed."
+else
+ echo "$number files renamed."
+fi
+}
+
+
+##################################################
+# Remove text from file1 which is in file2 and   #
+# store it in an other file      #
+##################################################
+
+###### handy if you have file where file1 was the original
+# and you want to remove the original data from your file2
+# usage: grep -Fvf nameofinputfile1 nameofinputfile2 > nameofoutputfile
+function comparenclean() { grep -Fvf $1 $2 > $3 ; }
+
+
+
+###### save lines unique to file2
+# if both file1 and file2 are already sorted: comm -13 nameofinputfile1 nameofinputfile2 > nameofoutputfile
+function comparenclean_() { comm -13 <(sort $1) <(sort $2) > $3 ; }
+
+
+##################################################
+# Count opening and closing braces in a string   #
+##################################################
+
+function countbraces() { COUNT_OPENING=$(echo $1 | grep -o "(" | wc -l); COUNT_CLOSING=$(echo $1 | grep -o ")" | wc -l); echo Opening: $COUNT_OPENING; echo Closing: $COUNT_CLOSING; }
+
+
+##################################################
+# Count files in current directory     #
+##################################################
+
+function count_files()
+
+{
+  case $1 in
+    *+h)
+      echo $(($(ls --color=no -1 -la . | grep -v ^l | wc -l)-1))
+    ;;
+    *-h)
+      echo $(($(ls --color=no -1 -l . | grep -v ^l | wc -l)-1))
+    ;;
+    *+d)
+      echo $(($(ls --color=no -1 -la . | grep -v ^- | wc -l)-1))
+    ;;
+    *-d)
+      echo $(($(ls --color=no -1 -l . | grep -v ^- | wc -l)-1))
+    ;;
+    *+f)
+      echo $(($(ls --color=no -1 -la . | grep -v ^d | wc -l)-1))
+    ;;
+    *-f)
+      echo $(($(ls --color=no -1 -l . | grep -v ^d | wc -l)-1))
+    ;;
+    *)
+      echo -e "\n${ewhite}Usage:"
+      echo -e "\n${eorange}count_files${ewhite} | ${egreen}+h ${eiceblue}[count files and folders - include hidden ones] \
+      \n${eorange}count_files${ewhite} | ${egreen}-h ${eiceblue}[count files and folders - exclude hidden ones] \
+      \n${eorange}count_files${ewhite} | ${egreen}+d ${eiceblue}[count folders - include hidden ones] \
+      \n${eorange}count_files${ewhite} | ${egreen}-d ${eiceblue}[count folders - exclude hidden ones] \
+      \n${eorange}count_files${ewhite} | ${egreen}+f ${eiceblue}[count files - include hidden ones] \
+      \n${eorange}count_files${ewhite} | ${egreen}-f ${eiceblue}[count files - exclude hidden ones]\n"
+      tput sgr0
+    ;;
+  esac
+}
+
+
+##################################################
+# Count files by extension       #
+##################################################
+
+function count_files_by_ext() { find . -type f | sed -n 's/..*\.//p' | sort -f | uniq -ic ; }
+
+
+##################################################
+# Count processes that are running     #
+##################################################
+
+function count_processes()
+
+{
+  case $1 in
+    *help )
+      echo -e "\n${ewhite}Usage:"
+      echo -e "\n${eorange}count_processes${ewhite} | ${egreen}! no options !\n"
+      tput sgr0
+    ;;
+    * )
+      procs=$(ps ax | wc -l | awk '{print $1}')
+      if [[ $procs -lt 10 ]]; then
+        echo "000$procs"
+      elif [[ $procs -lt 100 ]]; then
+        echo "00$procs"
+      elif [[ $procs -lt 1000 ]]; then
+        echo "0$procs"
+      fi
+    ;;
+  esac
+}
+
+
+##################################################
+# Cut last n lines in file, 10 by default  #
+##################################################
+
+function cuttail()
+{
+    nlines=${2:-10}
+    sed -n -e :a -e "1,${nlines}!{P;N;D;};N;ba" $1
+}
+
+
+
+##################################################
+# Continuously print string as if being entered  #
+# from the keyboard        #
+##################################################
+
+function cycle() { while :;do((i++));echo -n "${3:$(($i%${#3})):1}";sleep .$(($RANDOM%$2+$1));done;}
+
+
+##################################################
+# Super stealth background launch    #
+##################################################
+function daemon()
+{
+    (exec "$@" >&/dev/null &)
+}
+
+
+##################################################
+# Show dead links        #
+##################################################
+if [ $LINUX ]
+ then
+    function deadlink() {
+    find -L -type l
+   }
+fi
+
+##################################################
+# Show empty files in the directed directory   #
+##################################################
+
+function empty() {
+  
+  find "$1" -empty
+}
+
+
+##################################################
+# Find a file(s) ...         #
+##################################################
+
+###### ... with pattern $1 in name and Execute $2 on it
+function fe() { find . -type f -iname '*'$1'*' -exec "${2:-file}" {} \;  ; }
+
+
+###### ... under the current directory
+function ff() { /usr/bin/find . -name "$@" ; }
+
+
+
+###### ... whose name ends with a given string
+function ffe() { /usr/bin/find . -name '*'"$@" ; }
+
+
+
+###### ... fast find (by filename; uses sh, less and sed)
+function ffind() { local a=$1; local b=$2; local c="$a"*/*"$b"*; case $# in [01])echo usage: ff drive string [match-no\(s\)];; 2)printf "%s\n" $c|less -SN;; 3)less $(printf "%s\n" $c|sed -n "$3"p|tr '\n' ' ');; esac; }
+
+
+
+###### ... whose name starts with a given string
+function ffs() { /usr/bin/find . -name "$@"'*' ; }
+
+
+
+###### ... larger than a certain size (in bytes)
+function find_larger() { find . -type f -size +${1}c ; }
+
+
+###### find a file with a pattern in name in the local directory
+function fp()
+{
+    find . -type f -iname '*'$*'*' -ls ;
+}
+
+
+###### find pattern in a set of files and highlight them
+function fstr()
+{
+    OPTIND=1
+    local case=""
+    local usage="fstr: find string in files.
+Usage: fstr [-i] \"pattern\" [\"filename pattern\"] "
+    while getopts :it opt
+    do
+        case "$opt" in
+        i) case="-i " ;;
+        *) echo "$usage"; return;;
+        esac
+    done
+    shift $(( $OPTIND - 1 ))
+    if [ "$#" -lt 1 ]; then
+        echo "$usage"
+        return;
+    fi
+    local SMSO=$(tput smso)
+    local RMSO=$(tput rmso)
+    find . -type f -name "${2:-*}" -print0 | xargs -0 grep -sn ${case} "$1" 2>&- | \
+sed "s/$1/${SMSO}\0${RMSO}/gI" | more
+}
+
+
+
+###### searches through the text of all the files in your current directory
+# http://seanp2k.com/?p=13
+# Good for debugging a PHP script you didn't write and can't trackdown where MySQL connect string actually is
+# function grip() {
+# grep -ir "$1″ "$PWD"
+# }
+
+
+
+###### ... who is the newest file in a directory
+function newest() { find ${1:-\.} -type f |xargs ls -lrt ; }
+
+##################################################
+# Easily run a program in the background without #
+# losing output          #
+##################################################
+
+function fork() { tf=$(tempfile -d /tmp -p $1.);echo -n "$tf "; $@ &>$tf& }
+
+
+##################################################
+# Cool History Summerizer      #
+##################################################
+
+function historyawk() { history|awk '{a[$2]++}END{for(i in a){printf"%5d\t%s\n",a[i],i}}'|sort -nr|head; }
+
+
+##################################################
+# Get just the HTTP headers from a web page  #
+# (and its redirects)        #
+##################################################
+
+function http_headers() { /usr/bin/curl -I -L $@ ; }
+
+
+
+##################################################
+# Convert number of bytes to human readable    #
+# filesize           #
+##################################################
+
+function human_filesize() { awk -v sum="$1" ' BEGIN {hum[1024^3]="Gb"; hum[1024^2]="Mb"; hum[1024]="Kb"; for (x=1024^3; x>=1024; x/=1024) { if (sum>=x) { printf "%.2f %s\n",sum/x,hum[x]; break; } } if (sum<1024) print "1kb"; } ' ; }
+
+
+
+##################################################
+# :h gets you to the vim help menu or directly   #
+# to :help wordname        #
+##################################################
+
+function :h() {  vim --cmd ":silent help $@" --cmd "only"; }
+
+
+
+##################################################
+# Show computer information of all sorts   #
+# (requires 'gawk': sudo apt-get install gawk)   #
+##################################################
+
+###### machine details
+function ii()
+{
+    echo -e "\n${RED}You are logged onto:$NC " ; hostname
+    echo -e "\n${RED}Additionnal information:$NC " ; uname -a
+    echo -e "\n${RED}Users logged on:$NC " ; w -h
+    echo -e "\n${RED}Current date:$NC " ; date
+    echo -e "\n${RED}Machine stat:$NC " ; uptime
+    echo -e "\n${RED}Disk space:$NC " ; df -h
+    echo -e "\n${RED}Memory stats (in MB):$NC " ;
+    if [ $LINUX ]; then
+        free -m
+    elif [ $OSX ]; then
+        vm_stat
+    fi
+    echo -e "\n${RED}IPs:$NC " ; ips
+}

@@ -1,0 +1,18 @@
+[ $(uname -s) = "Darwin" ] && export OSX=1 && export UNIX=1
+[ $(uname -s) = "Linux" ] && export LINUX=1 && export UNIX=1
+
+export LANG="en_US.UTF-8"
+export LC_ALL="en_US.UTF-8"
+export LC_TIME="en_US.UTF-8"
+
+export EDITOR=vim
+
+
+#########################################################################
+# Temporary aliases useful for demos, other current projects
+#########################################################################
+export MYTEMP=~/Documents/Temp
+export MYCODE=~/code
+export MYSCRATCH=~/Documents/Temp/Scratch
+export MYDOWNLOADS=~/Downloads
+export MYDOCUMENTS=~/Documents

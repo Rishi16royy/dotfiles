@@ -1,0 +1,2139 @@
+###### to export private OpenPGP keys to a file for safe keeping and potential restoration
+# using 'mykeys', put the appropriate GPG key after you type this function
+function exportmykeys_private()
+{
+gpg --list-secret-keys
+echo -n "Please enter the appropriate private key...
+Look for the line that starts something like "sec 1024D/".
+The part after the 1024D is the key_id.
+...like this: '2942FE31'...
+
+"
+read MYKEYPRIV
+gpg -ao Private_Keys-private.key --export-secret-keys "$MYKEYPRIV"
+echo -n "All done."
+}
+
+
+###### to export public OpenPGP keys to a file for safe keeping and potential restoration
+# using 'mykeys', put the appropriate GPG key after you type this function
+function exportmykeys_public()
+{
+gpg --list-keys
+echo -n "Please enter the appropriate public key...
+Look for line that starts something like "pub 1024D/".
+The part after the 1024D is the public key_id.
+...like this: '2942FE31'...
+
+"
+read MYKEYPUB
+gpg -ao Public_Keys-public.key --export "$MYKEYPUB"
+echo -n "All done."
+}
+
+###### to get a list of your public and private OpenPGP/GPG pubkeys
+alias mykeys='gpg --list-keys && gpg --list-secret-keys'
+
+
+###### to restore your public and private OpenPGP keys
+# from Public_Key-public.key and Private_Keys-private.key files:
+function restoremykeys()
+{
+echo -n "Please enter the full path to Public keys (spaces are fine)...
+
+Example: '/home/(your username)/Public_Key-public.key'...
+
+"
+read MYKEYS_PUBLIC_LOCATION
+gpg --import "$MYKEYS_PUBLIC_LOCATION"
+echo -n "Please enter the full path to Private keys (spaces are fine)...
+
+Example: '/home/(your username)/Private_Keys-private.key'...
+
+"
+read MYKEYS_PRIVATE_LOCATION
+gpg --import "$MYKEYS_PRIVATE_LOCATION"
+echo -n "All done."
+}
+
+###### to setup new public and private OpenPGP keys
+function setupmykeys()
+{
+# Generate new key
+gpg --gen-key
+# Publish new key to Ubuntu keyserver
+gpg --keyserver hkp://keyserver.ubuntu.com --send-keys
+# Import an OpenPGP key
+gpg --fingerprint
+# Verify new key
+read -sn 1 -p "Before you continue, you must enter the fingerprint
+in the appropriate place in your Launchpad PPA on their website...
+
+Once you have successfully inputed it, wait for your email before
+you press any key to continue...
+
+"
+gedit $HOME/file.txt
+read -sn 1 -p "Once you have received your email from Launchpad to
+verify your new key, copy and paste the email message received upon
+import of OpenPGP key from "-----BEGIN PGP MESSAGE-----" till
+"-----END PGP MESSAGE-----" to the 'file.txt' in your home folder
+that was just opened for you
+
+Once you have successfully copied and pasted it, save it and
+press any key to continue...
+
+"
+gpg -d $HOME/file.txt
+echo -n "All done."
+}
+
+
+##################################################
+# Show all strings (ASCII & Unicode) in a file   #
+##################################################
+
+function allStrings() { cat "$1" | tr -d "\0" | strings ; }
+
+
+##################################################
+# Find all videos under current directory using  #
+# MIME a.k.a not using extension     #
+##################################################
+
+function allVideos() { find ./ -type f -print0 | xargs -0 file -iNf - | grep ": video/" | cut -d: -f1 ; }
+
+
+###### grep by paragraph instead of by line
+function grepp() { [ $# -eq 1 ] && perl -00ne "print if /$1/i" || perl -00ne "print if /$1/i" < "$2";}
+
+
+###### convert ascii
+function asc2all() {
+  if [[ $1 ]]; then
+    echo "ascii $1 = binary $(asc2bin $1)"
+    echo "ascii $1 = octal $(asc2oct $1)"
+    echo "ascii $1 = decimal $(asc2dec $1)"
+    echo "ascii $1 = hexadecimal $(asc2hex $1)"
+    echo "ascii $1 = base32 $(asc2b32 $1)"
+    echo "ascii $1 = base64 $(asc2b64 $1)"
+  fi
+}
+
+function asc2bin() {
+  if [[ $1 ]]; then
+    echo "obase=2 ; $(asc2dec $1)" | bc
+  fi
+}
+
+
+
+function asc2b64() {
+  if [[ $1 ]]; then
+    echo "obase=64 ; $(asc2dec $1)" | bc
+  fi
+}
+
+
+
+function asc2b32() {
+  if [[ $1 ]]; then
+    echo "obase=32 ; $(asc2dec $1)" | bc
+  fi
+}
+
+
+
+function asc2dec() {
+  if [[ $1 ]]; then
+    printf '%d\n' "'$1'"
+  fi
+}
+
+
+
+function asc2hex() {
+  if [[ $1 ]]; then
+    echo "obase=16 ; $(asc2dec $1)" | bc
+  fi
+}
+
+
+
+function asc2oct() {
+  if [[ $1 ]]; then
+    echo "obase=8 ; $(asc2dec $1)" | bc
+  fi
+}
+
+
+
+###### Averaging columns of numbers
+# Computes a columns average in a file. Input parameters = column number and optional pattern.
+function avg() { awk "/$2/{sum += \$$1; lc += 1;} END {printf \"Average over %d lines: %f\n\", lc, sum/lc}"; }
+
+
+###### convert binaries
+# copyright 2007 - 2010 Christopher Bratusek
+function bin2all() {
+  if [[ $1 ]]; then
+    echo "binary $1 = octal $(bin2oct $1)"
+    echo "binary $1 = decimal $(bin2dec $1)"
+    echo "binary $1 = hexadecimal $(bin2hex $1)"
+    echo "binary $1 = base32 $(bin2b32 $1)"
+    echo "binary $1 = base64 $(bin2b64 $1)"
+    echo "binary $1 = ascii $(bin2asc $1)"
+  fi
+}
+
+
+
+function bin2asc() {
+  if [[ $1 ]]; then
+    echo -e "\0$(printf %o $((2#$1)))"
+  fi
+}
+
+
+
+function bin2b64() {
+  if [[ $1 ]]; then
+    echo "obase=64 ; ibase=2 ; $1" | bc
+  fi
+}
+
+
+
+function bin2b32() {
+  if [[ $1 ]]; then
+    echo "obase=32 ; ibase=2 ; $1 " | bc
+  fi
+}
+
+
+
+function bin2dec() {
+  if [[ $1 ]]; then
+    echo $((2#$1))
+  fi
+}
+
+
+
+function bin2hex() {
+  if [[ $1 ]]; then
+    echo "obase=16 ; ibase=2 ; $1" | bc
+  fi
+}
+
+
+
+function bin2oct() {
+  if [[ $1 ]]; then
+    echo "obase=8 ; ibase=2 ; $1" | bc
+  fi
+}
+
+###### simple calculator to 4 decimals
+function calc() {
+echo "scale=4; $1" | bc
+}
+
+
+
+###### temperature conversion
+# Copyright 2007 - 2010 Christopher Bratusek
+function cel2fah() {
+
+  if [[ $1 ]]; then
+  echo "scale=2; $1 * 1.8  + 32" | bc
+  fi
+
+}
+
+
+
+function cel2kel() {
+
+  if [[ $1 ]]; then
+  echo "scale=2; $1 + 237.15" | bc
+  fi
+
+}
+
+
+
+function fah2cel() {
+
+  if [[ $1 ]]; then
+  echo "scale=2 ; ( $1 - 32  ) / 1.8" | bc
+  fi
+
+}
+
+
+
+function fah2kel() {
+
+  if [[ $1 ]]; then
+  echo "scale=2; ( $1 + 459.67 ) / 1.8 " | bc
+  fi
+
+}
+
+
+
+function kel2cel() {
+
+  if [[ $1 ]]; then
+  echo "scale=2; $1 - 273.15" | bc
+  fi
+
+}
+
+
+
+function kel2fah() {
+
+  if [[ $1 ]]; then
+  echo "scale=2; $1 * 1.8 - 459,67" | bc
+  fi
+
+}
+
+
+
+###### Output an ASCII character given its decimal equivalent
+function chr() { printf \\$(($1/64*100+$1%64/8*10+$1%8)); }
+
+
+###### convert decimals
+# copyright 2007 - 2010 Christopher Bratusek
+function dec2all() {
+  if [[ $1 ]]; then
+    echo "decimal $1 = binary $(dec2bin $1)"
+    echo "decimal $1 = octal $(dec2oct $1)"
+    echo "decimal $1 = hexadecimal $(dec2hex $1)"
+    echo "decimal $1 = base32 $(dec2b32 $1)"
+    echo "decimal $1 = base64 $(dec2b64 $1)"
+    echo "deciaml $1 = ascii $(dec2asc $1)"
+  fi
+}
+
+
+
+function dec2asc() {
+  if [[ $1 ]]; then
+    echo -e "\0$(printf %o 97)"
+  fi
+}
+
+
+
+function dec2bin() {
+  if [[ $1 ]]; then
+    echo "obase=2 ; $1" | bc
+  fi
+}
+
+
+
+function dec2b64() {
+  if [[ $1 ]]; then
+    echo "obase=64 ; $1" | bc
+  fi
+}
+
+
+
+function dec2b32() {
+  if [[ $1 ]]; then
+    echo "obase=32 ; $1" | bc
+  fi
+}
+
+
+
+function dec2hex() {
+  if [[ $1 ]]; then
+    echo "obase=16 ; $1" | bc
+  fi
+}
+
+
+
+function dec2oct() {
+  if [[ $1 ]]; then
+    echo "obase=8 ; $1" | bc
+  fi
+}
+
+
+
+###### number --- convert decimal integer to english words
+# total number
+# Usage:  dec2text 1234 -> one thousand two hundred thirty-four
+# Author: Noah Friedman <friedman@prep.ai.mit.edu>
+function dec2text()
+{
+prog=`echo "$0" | sed -e 's/[^\/]*\///g'`
+garbage=`echo "$*" | sed -e 's/[0-9,.]//g'`
+if test ".$garbage" != "."; then
+  echo "$prog: Invalid character in argument." 1>&2
+fi
+case "$*" in
+# This doesn't always seem to work.
+#   *[!0-9,.]* ) echo "$prog: Invalid character in argument." 1>&2; ;;
+   *.* ) echo "$prog: fractions not supported (yet)." 1>&2; ;;
+   '' ) echo "Usage: $prog [decimal integer]" 1>&2; ;;
+esac
+result=
+eval set - "`echo ${1+\"$@\"} | sed -n -e '
+  s/[, ]//g
+  s/^00*/0/g
+  s/\(.\)\(.\)\(.\)$/\"\1 \2 \3\"/
+  :l
+  /[0-9][0-9][0-9]/{
+     s/\([^\" ][^\" ]*\)\([^\" ]\)\([^\" ]\)\([^\" ]\)/\1\"\2 \3 \4\"/g
+     t l
+  }
+  /^[0-9][0-9][0-9]/s/\([^\" ]\)\([^\" ]\)\([^\" ]\)/\"\1 \2 \3\"/
+  /^[0-9][0-9]/s/\([^\" ]\)\([^\" ]\)/\"\1 \2\"/
+  /^[0-9]/s/^\([^\" ][^\" ]*\)/\"\1\"/g;s/\"\"/\" \"/g
+  p'`"
+while test $# -ne 0 ; do
+  eval `set - $1;
+        d3='' d2='' d1=''
+        case $# in
+          1 ) d1=$1 ;;
+          2 ) d2=$1 d1=$2 ;;
+          3 ) d3=$1 d2=$2 d1=$3 ;;
+        esac
+        echo "d3=\"$d3\" d2=\"$d2\" d1=\"$d1\""`
+  val1='' val2='' val3=''
+  case "$d3" in
+    1 ) val3=one   ;;     6 ) val3=six   ;;
+    2 ) val3=two   ;;     7 ) val3=seven ;;
+    3 ) val3=three ;;     8 ) val3=eight ;;
+    4 ) val3=four  ;;     9 ) val3=nine  ;;
+    5 ) val3=five  ;;
+  esac
+  case "$d2" in
+    1 ) val2=teen   ;;    6 ) val2=sixty   ;;
+    2 ) val2=twenty ;;    7 ) val2=seventy ;;
+    3 ) val2=thirty ;;    8 ) val2=eighty  ;;
+    4 ) val2=forty  ;;    9 ) val2=ninety  ;;
+    5 ) val2=fifty  ;;
+  esac
+  case "$val2" in
+    teen )
+      val2=
+      case "$d1" in
+        0 ) val1=ten      ;;     5 ) val1=fifteen   ;;
+        1 ) val1=eleven   ;;     6 ) val1=sixteen   ;;
+        2 ) val1=twelve   ;;     7 ) val1=seventeen ;;
+        3 ) val1=thirteen ;;     8 ) val1=eighteen  ;;
+        4 ) val1=fourteen ;;     9 ) val1=nineteen  ;;
+      esac
+     ;;
+    0 ) : ;;
+    * )
+      test ".$val2" != '.' -a ".$d1" != '.0' \
+       && val2="${val2}-"
+      case "$d1" in
+        0 ) val2="$val2 " ;;     5 ) val1=five  ;;
+        1 ) val1=one      ;;     6 ) val1=six   ;;
+        2 ) val1=two      ;;     7 ) val1=seven ;;
+        3 ) val1=three    ;;     8 ) val1=eight ;;
+        4 ) val1=four     ;;     9 ) val1=nine  ;;
+      esac
+     ;;
+  esac
+  test ".$val3" != '.' && result="$result$val3 hundred "
+  test ".$val2" != '.' && result="$result$val2"
+  test ".$val1" != '.' && result="$result$val1 "
+  if test ".$d1$d2$d3" != '.000' ; then
+    case $# in
+       0 | 1 ) ;;
+       2 ) result="${result}thousand "          ;;
+       3 ) result="${result}million "           ;;
+       4 ) result="${result}billion "           ;;
+       5 ) result="${result}trillion "          ;;
+       6 ) result="${result}quadrillion "       ;;
+       7 ) result="${result}quintillion "       ;;
+       8 ) result="${result}sextillion "        ;;
+       9 ) result="${result}septillion "        ;;
+      10 ) result="${result}octillion "         ;;
+      11 ) result="${result}nonillion "         ;;
+      12 ) result="${result}decillion "         ;;
+      13 ) result="${result}undecillion "       ;;
+      14 ) result="${result}duodecillion "      ;;
+      15 ) result="${result}tredecillion "      ;;
+      16 ) result="${result}quattuordecillion " ;;
+      17 ) result="${result}quindecillion "     ;;
+      18 ) result="${result}sexdecillion "      ;;
+      19 ) result="${result}septendecillion "   ;;
+      20 ) result="${result}octodecillion "     ;;
+      21 ) result="${result}novemdecillion "    ;;
+      22 ) result="${result}vigintillion "      ;;
+      * ) echo "Error: number too large (66 digits max)." 1>&2; ;;
+    esac
+  fi
+  shift
+done
+set $result > /dev/null
+case "$*" in
+  '') set zero ;;
+esac
+echo ${1+"$@"}
+# number ends here
+}
+
+
+
+# individual numbers
+# Usage:  dec2text 1234 -> one two three four
+function dec2text_()
+{
+# This script is part of nixCraft shell script collection (NSSC)
+# Visit http://bash.cyberciti.biz/ for more information.
+n=$1
+len=$(echo $n | wc -c)
+len=$(( $len - 1 ))
+for (( i=1; i<=$len; i++ ))
+do
+   # get one digit at a time
+    digit=$(echo $n | cut -c $i)
+   # use case control structure to find digit equivalent in words
+    case $digit in
+        0) echo -n "zero " ;;
+        1) echo -n "one " ;;
+        2) echo -n "two " ;;
+        3) echo -n "three " ;;
+        4) echo -n "four " ;;
+        5) echo -n "five " ;;
+        6) echo -n "six " ;;
+        7) echo -n "seven " ;;
+        8) echo -n "eight " ;;
+        9) echo -n "nine " ;;
+    esac
+done
+# just print new line
+echo ""
+}
+
+
+
+function d2u() {
+  # copyright 2007 - 2010 Christopher Bratusek
+  if [[ -e "$1" ]]; then
+    sed -r 's/\r$//' -i "$1"
+  fi
+}
+
+
+
+function u2d() {
+  # copyright 2007 - 2010 Christopher Bratusek
+  if [[ -e "$1" ]]; then
+    sed -r 's/$/\r/' -i "$1"
+  fi
+}
+
+
+
+###### factorial for integers
+function factorial()
+{
+echo "Enter an integer: "
+read n
+# Below we define the factorial function in bc syntax
+fact="define f (x) {
+i=x
+fact=1
+while (i > 1) {
+fact=fact*i
+i=i-1
+}
+return fact
+}"
+# Below we pass the function defined above, and call it with n as a parameter and pipe it to bc
+factorial=`echo "$fact;f($n)" | bc -l`
+echo "$n! = $factorial"
+}
+
+
+
+###### convert hexadecimal numbers
+# copyright 2007 - 2010 Christopher Bratusek
+function hex2all() {
+  if [[ $1 ]]; then
+    echo "hexadecimal $1 = binary $(hex2bin $1)"
+    echo "hexadecimal $1 = octal $(hex2oct $1)"
+    echo "hexadecimal $1 = decimal $(hex2dec $1)"
+    echo "hexadecimal $1 = base32 $(hex2b32 $1)"
+    echo "hexadecimal $1 = base64 $(hex2b64 $1)"
+    echo "hexadecimal $1 = ascii $(hex2asc $1)"
+  fi
+}
+
+
+
+function hex2asc() {
+  if [[ $1 ]]; then
+    echo -e "\0$(printf %o $((16#$1)))"
+  fi
+}
+
+
+
+function hex2bin() {
+  if [[ $1 ]]; then
+    echo "obase=2 ; ibase=16 ; $1" | bc
+  fi
+}
+
+
+
+function hex2b64() {
+  if [[ $1 ]]; then
+    echo "obase=64 ; ibase=16 ; $1" | bc
+  fi
+}
+
+
+
+function hex2b32() {
+  if [[ $1 ]]; then
+    echo "obase=32 ; ibase=16 ; $1" | bc
+  fi
+}
+
+
+
+function hex2dec() {
+  if [[ $1 ]]; then
+     echo $((16#$1))
+  fi
+}
+
+
+
+function hex2oct() {
+  if [[ $1 ]]; then
+    echo "obase=8 ; ibase=16 ; $1" | bc
+  fi
+}
+
+
+
+###### length
+function length()
+{
+    if [ $# -lt 1 ]; then
+        echo "count # of chars in arugment"
+        echo "usage: length [string]"
+    else
+        echo -n $@ | wc -c
+    fi
+}
+
+
+
+###### finding logs for numbers
+function math-log()
+{
+echo "Enter value: "
+read x
+echo "Natural Log: ln($x) :"
+echo "l($x)" | bc -l
+echo "Ten Base Log: log($x) :"
+echo "l($x)/l(10)" | bc -l
+}
+
+
+
+###### magic square generator (odd-order squares only!)
+function msquare()
+{
+# Author: mendel cooper
+EVEN=2
+MAXSIZE=31   # 31 rows x 31 cols.
+E_usage=90   # Invocation error.
+dimension=
+declare -i square
+function usage_message()
+{
+  echo "Usage: $0 square-size"
+  echo "   ... where \"square-size\" is an ODD integer"
+  echo "       in the range 3 - 31."  #  Works for squares up to order 159
+}
+function calculate()       # Here's where the actual work gets done.
+{
+  local row col index dimadj j k cell_val=1
+  dimension=$1
+  let "dimadj = $dimension * 3"; let "dimadj /= 2"   # x 1.5, then truncate.
+  for ((j=0; j < dimension; j++))
+  do
+    for ((k=0; k < dimension; k++))
+    do  # Calculate indices, then convert to 1-dim. array index.
+        # Bash doesn't support multidimensional arrays. Pity.
+      let "col = $k - $j + $dimadj"; let "col %= $dimension"
+      let "row = $j * 2 - $k + $dimension"; let "row %= $dimension"
+      let "index = $row*($dimension) + $col"
+      square[$index]=cell_val; ((cell_val++))
+    done
+  done
+}     # Plain math, no visualization required.
+
+
+
+function print_square()               # Output square, one row at a time.
+{
+  local row col idx d1
+  let "d1 = $dimension - 1"   # Adjust for zero-indexed array.
+  for row in $(seq 0 $d1)
+  do
+    for col in $(seq 0 $d1)
+    do
+      let "idx = $row * $dimension + $col"
+      printf "%3d " "${square[idx]}"; echo -n "  "
+    done   # Displays up to 13-order neatly in 80-column term window.
+    echo   # Newline after each row.
+  done
+}
+if [[ -z "$1" ]] || [[ "$1" -gt $MAXSIZE ]]
+then
+  usage_message
+fi
+let "test_even = $1 % $EVEN"
+if [ $test_even -eq 0 ]
+then           # Can't handle even-order squares.
+  usage_message
+fi
+calculate $1
+print_square   # echo "${square[@]}"   # DEBUG
+}
+
+
+
+###### print multiplication tables
+function multitables()
+{
+for i in {1..9}; do for j in `seq 1 $i`; do echo -ne "${j}x${i}=$((j*i))\t"; done; echo; done
+}
+
+
+
+###### given a number, show it with comma separated values
+function nicenumber()
+{
+# expects DD and TD to be instantiated. instantiates nicenum
+# or, if a second arg is specified, the output is echoed to stdout
+function nice_number()
+{
+  # Note that we use the '.' as the decimal separator for parsing
+  # the INPUT value to this script. The output value is as specified
+  # by the user with the -d flag, if different from a '.'
+  integer=$(echo $1 | cut -d. -f1)    # left of the decimal
+  decimal=$(echo $1 | cut -d. -f2)    # right of the decimal
+  if [ $decimal != $1 ]; then
+    # there's a fractional part, let's include it.
+    result="${DD:="."}$decimal"
+  fi
+  thousands=$integer
+  while [ $thousands -gt 999 ]; do
+    remainder=$(($thousands % 1000))  # three least significant digits
+    while [ ${#remainder} -lt 3 ] ; do  # force leading zeroes as needed
+      remainder="0$remainder"
+    done
+    thousands=$(($thousands / 1000))  # to left of remainder, if any
+    result="${TD:=","}${remainder}${result}"  # builds right-to-left
+  done
+  nicenum="${thousands}${result}"
+  if [ ! -z $2 ] ; then
+    echo $nicenum
+  fi
+}
+DD="."  # decimal point delimiter, between integer & fractional value
+TD=","  # thousands delimiter, separates every three digits
+while getopts "d:t:" opt; do
+  case $opt in
+    d ) DD="$OPTARG"  ;;
+    t ) TD="$OPTARG"  ;;
+  esac
+done
+shift $(($OPTIND - 1))
+if [ $# -eq 0 ] ; then
+  cat << "EOF" >&2
+Usage: $(basename $0) [-d c] [-t c] numeric value
+       -d specifies the decimal point delimiter (default '.')
+       -t specifies the thousands delimiter (default ',')
+EOF
+fi
+nice_number $1 1  # second arg forces this to 'echo' output
+}
+
+
+
+###### convert normal to unix
+function normal2unix()
+{
+    echo "${@}" | awk '{print mktime($0)}';
+}
+
+
+
+###### convert unix to normal
+function unix2normal()
+{
+    echo $1 | awk '{print strftime("%Y-%m-%d %H:%M:%S",$1)}';
+}
+
+
+
+###### list of numbers with equal width
+function nseq()
+{
+seq -w 0 "$1"
+}
+
+
+###### convert octals
+# copyright 2007 - 2010 Christopher Bratusek
+function oct2all() {
+  if [[ $1 ]]; then
+    echo "octal $1 = binary $(oct2bin $1)"
+    echo "octal $1 = decimal $(oct2dec $1)"
+    echo "octal $1 = hexadecimal $(oct2hex $1)"
+    echo "octal $1 = base32 $(oct2b32 $1)"
+    echo "octal $1 = base64 $(oct2b64 $1)"
+    echo "octal $1 = ascii $(oct2asc $1)"
+  fi
+}
+
+
+
+function oct2asc() {
+  if [[ $1 ]]; then
+    echo -e "\0$(printf %o $((8#$1)))"
+  fi
+}
+
+
+
+function oct2bin() {
+  if [[ $1 ]]; then
+    echo "obase=2 ; ibase=8 ; $1" | bc
+  fi
+}
+
+
+
+function oct2b64() {
+  if [[ $1 ]]; then
+    echo "obase=64 ; ibase=8 ; $1" | bc
+  fi
+}
+
+
+
+function oct2b32() {
+  if [[ $1 ]]; then
+    echo "obase=32 ; ibase=8 ; $1" | bc
+  fi
+}
+
+
+
+function oct2dec() {
+  if [[ $1 ]]; then
+    echo $((8#$1))
+  fi
+}
+
+
+
+function oct2hex() {
+  if [[ $1 ]]; then
+    echo "obase=16 ; ibase=8 ; $1" | bc
+  fi
+}
+
+
+
+###### Pascal's triangle
+function pascal() { l=15;for((i=0;i<$l;i++));do eval "a$i=($(pv=1;v=1;for((j=0;j<$l-$i;j++));do [ $i -eq 0 -o $j -eq 0 ]&&{ v=1 && pv=1; }||v=$((pv+a$((i-1))[$((j))]));echo -n "$v ";pv=$v;done;));";o="$(eval echo "$(for((k=0;k<=$i;k++)); do eval "echo -n \"\$((a\$((i-k))[k])) \""; done)")";echo "$o";s="${#o}"; done; } | while read l; do j=$((s-${#l}/2)); echo "$(while ((i++ < j)); do echo -n " ";done;)$l";done
+
+
+
+###### convert phone numbers to letters/potentially english words
+# Creator:  asmoore82
+function phone2text()
+{
+echo -n "Enter number: "
+read num
+# Create a list of possibilites for expansion by the shell
+# the "\}" is an ugly hack to get "}" into the replacment string -
+# this is not a clean escape sequence - the litteral "\" is left behind!
+num="${num//2/{a,b,c\}}"
+num="${num//3/{d,e,f\}}"
+num="${num//4/{g,h,i\}}"
+num="${num//5/{j,k,l\}}"
+num="${num//6/{m,n,o\}}"
+num="${num//7/{p,q,r,s\}}"
+num="${num//8/{t,u,v\}}"
+num="${num//9/{w,x,y,z\}}"
+# cleaup from the hack - remove all litteral \'s
+num="${num//\\/}"
+echo ""
+echo "Possible words are:"
+for word in $( eval echo "$num" )
+do
+    echo '>' "$word"
+done
+# End of File
+}
+
+
+
+###### powers of numerals
+# copyright 2007 - 2010 Christopher Bratusek
+function power() {
+  if [[ $1 ]]; then
+    if [[ $2 ]]; then
+      echo "$1 ^ $2" | bc
+    else  echo "$1 ^ 2" | bc
+    fi
+  fi
+}
+
+
+
+###### generate prime numbers, without using arrays.
+# script contributed by Stephane Chazelas.
+function primes()
+{
+LIMIT=1000                    # Primes, 2 ... 1000.
+Primes()
+{
+ (( n = $1 + 1 ))             # Bump to next integer.
+ shift                        # Next parameter in list.
+#  echo "_n=$n i=$i_"
+ if (( n == LIMIT ))
+ then echo $*
+ return
+ fi
+ for i; do                    # "i" set to "@", previous values of $n.
+#   echo "-n=$n i=$i-"
+   (( i * i > n )) && break   # Optimization.
+   (( n % i )) && continue    # Sift out non-primes using modulo operator.
+   Primes $n $@               # Recursion inside loop.
+   return
+   done
+   Primes $n $@ $n            #  Recursion outside loop.
+                              #  Successively accumulate
+            #+ positional parameters.
+                              #  "$@" is the accumulating list of primes.
+}
+Primes 1
+}
+
+
+
+###### radicals of numbers
+# copyright 2007 - 2010 Christopher Bratusek
+function radical() {
+  if [[ $1 ]]; then
+    echo "sqrt($1)" | bc -l
+  fi
+}
+
+
+
+###### convert to roman numerals
+function roman-numeral()
+{
+python -c 'while True: print (lambda y,x=[],nums={ 1000:"M",900:"CM",500:"D",400:"CD",100:"C",90:"XC",
+50:"L",40:"XL",10:"X",9:"IX",5:"V",4:"IV",1:"I"}: (lambda ro=(lambda : map(lambda g,r=lambda b:x.append(
+y[-1]/b),t=lambda v:y.append(y[-1]%v):map(eval,["r(g)","t(g)"]),sorted(nums.keys())[::-1]))():"".join(
+map(lambda fg: map(lambda ht: nums[ht],sorted(nums.keys())[::-1])[fg] * x[fg],range(len(x)))))())([int(
+raw_input("Please enter a number between 1 and 4000: "))])'
+}
+
+
+
+###### round numerals to whole numbers
+# copyright 2007 - 2010 Christopher Bratusek
+function round() {
+  if [[ $1 ]]; then
+    if [[ $2 ]]; then
+      echo "$(printf %.${2}f $1)"
+    else  echo "$(printf %.0f $1)"
+    fi
+  fi
+}
+
+
+
+###### ruler that stretches across the terminal
+function ruler() { for s in '....^....|' '1234567890'; do w=${#s}; str=$( for (( i=1; $i<=$(( ($COLUMNS + $w) / $w )) ; i=$i+1 )); do echo -n $s; done ); str=$(echo $str | cut -c -$COLUMNS) ; echo $str; done; }
+
+
+
+###### convert seconds to minutes, hours, days, and etc.
+# inputs a number of seconds, outputs a string like "2 minutes, 1 second"
+# $1: number of seconds
+function sec2all()
+{
+    local millennia=$((0))
+    local centuries=$((0))
+    local years=$((0))
+    local days=$((0))
+    local hour=$((0))
+    local mins=$((0))
+    local secs=$1
+    local text=""
+    # convert seconds to days, hours, etc
+    millennia=$((secs / 31536000000))
+    secs=$((secs % 31536000000))
+    centuries=$((secs / 3153600000))
+    secs=$((secs % 3153600000))
+    years=$((secs / 31536000))
+    secs=$((secs % 31536000))
+    days=$((secs / 86400))
+    secs=$((secs % 86400))
+    hour=$((secs / 3600))
+    secs=$((secs % 3600))
+    mins=$((secs / 60))
+    secs=$((secs % 60))
+    # build full string from unit strings
+    text="$text$(seconds-convert-part $millennia "millennia")"
+    text="$text$(seconds-convert-part $centuries "century")"
+    text="$text$(seconds-convert-part $years "year")"
+    text="$text$(seconds-convert-part $days "day")"
+    text="$text$(seconds-convert-part $hour "hour")"
+    text="$text$(seconds-convert-part $mins "minute")"
+    text="$text$(seconds-convert-part $secs "second")"
+    # trim leading and trailing whitespace
+    text=${text## }
+    text=${text%% }
+    # special case for zero seconds
+    if [ "$text" == "" ]; then
+        text="0 seconds"
+    fi
+    # echo output for the caller
+    echo ${text}
+}
+# formats a time unit into a string
+# $1: integer count of units: 0, 6, etc
+# $2: unit name: "hour", "minute", etc
+function seconds-convert-part()
+{
+    local unit=$1
+    local name=$2
+    if [ $unit -ge 2 ]; then
+        echo " ${unit} ${name}s"
+    elif [ $unit -ge 1 ]; then
+        echo " ${unit} ${name}"
+    else
+        echo ""
+    fi
+}
+
+
+
+###### finding the square root of numbers
+function sqrt()
+{
+echo "sqrt ("$1")" | bc -l
+}
+
+
+
+###### converts a string (words, text) to binary
+function string2bin()
+{
+perl -nle 'printf "%0*v8b\n"," ",$_'
+}
+
+
+###### trigonmetry calculations with angles
+function trig-angle()
+{
+echo "Enter angle in degree: "
+read deg
+# Note: Pi calculation
+# tan(pi/4) = 1
+# atan(1) = pi/4 and
+# pi = 4*atan(1)
+pi=`echo "4*a(1)" | bc -l`
+rad=`echo "$deg*($pi/180)" | bc -l`
+echo "$deg Degree = $rad Radian"
+echo "Sin($deg): "
+echo "s($rad)" | bc -l
+echo "Cos($deg): "
+echo "c($rad)" | bc -l
+echo "Tan($deg): "
+echo "s($rad)/c($rad)" | bc -l
+}
+
+
+##################################################
+# Clock - A bash clock that can run in your  #
+# terminal window.         #
+##################################################
+
+###### binary clock
+function bclock()
+{
+watch -n 1 'echo "obase=2;`date +%s`" | bc'
+}
+
+###### binary clock
+function bclock2()
+{
+perl -e 'for(;;){@d=split("",`date +%H%M%S`);print"\r";for(0..5){printf"%.4b ",$d[$_]}sleep 1}'
+}
+
+
+##################################################
+# Bookmarking            #
+##################################################
+
+###### bookmarking the current directory in 'alias' form
+function bookmark() {
+  # copyright 2007 - 2010 Christopher Bratusek
+  if [[ $1 != "" && $(alias | grep -w go-$1) == "" ]]; then
+    echo "alias go-$1='cd $PWD'" >> $HOME/.bookmarks
+    . $HOME/.bookmarks
+  elif [[ $1 == "" ]]; then
+    echo "need name for the bookmark."
+  else  echo "bookmark go-$1 already exists."
+  fi
+}
+
+
+function unmark() {
+  # copyright 2007 - 2010 Christopher Bratusek
+  if [[ $(alias | grep -w go-$1= ) != "" ]]; then
+    sed -e "/go-$1/d" -i $HOME/.bookmarks
+    xunalias go-$1
+  fi
+}
+
+
+
+##################################################
+# Concatenate PDF files        #
+##################################################
+
+###### e.g. cat_pdfs -o combined.pdf file1.pdf file2.pdf file3.pdf
+function cat_pdfs() { python '/System/Library/Automator/Combine PDF Pages.action/Contents/Resources/join.py' "$@" ; }
+
+function checksum()
+# copyright 2007 - 2010 Christopher Bratusek
+{
+  action=$1
+  shift
+  if [[ ( $action == "-c" || $action == "--check" ) && $1 == *.* ]]; then
+    type="${1/*./}"
+  else  type=$1
+    shift
+  fi
+  case $type in
+    md5 )
+      checktool=md5sum
+    ;;
+    sha1 | sha )
+      checktool=sha1sum
+    ;;
+    sha224 )
+      checktool=sha224sum
+    ;;
+    sha256 )
+      checktool=sha256sum
+    ;;
+    sha384 )
+      checktool=sha384sum
+    ;;
+    sha512 )
+      checktool=sha512sum
+    ;;
+  esac
+  case $action in
+    -g | --generate )
+      for file in "${@}"; do
+        $checktool "${file}" > "${file}".$type
+      done
+    ;;
+    -c | --check )
+      for file in "${@}"; do
+        if [[ "${file}" == *.$type ]]; then
+          $checktool --check "${file}"
+        else  $checktool --check "${file}".$type
+        fi
+      done
+    ;;
+    -h | --help )
+    ;;
+  esac
+}
+
+
+
+###### MD5 checksum
+function md5()
+{
+    echo -n $@ | md5sum
+}
+
+
+###### Encode a string in md5 hash of 32 characters
+# You can short the length with the second parameter.
+#  @param string $1 string (required)
+#  @param integer $2 length (option, default: 32)
+#  @return string
+#  @example:    md5 "Hello World" 8
+function md5_() {
+      local length=${2:-32}
+      local string=$( echo "$1" | md5sum | awk '{ print $1 }' )
+      echo ${string:0:${length}}
+}
+
+
+
+
+###### replaces a color in PDF document (useful for removing dark background for printing)
+# usage:  remove_color input.pdf output.pdf
+function uncolorpdf()
+{
+convert -density 300 "$1" -fill "rgb(255,255,255)" -opaque "rgb(0,0,0)" "$2"
+}
+
+
+###### basic encrypt / decrypt
+# example: "encry filename" or "decry filename"
+function encry()
+{
+gpg -ac --no-options "$1"
+}
+
+function decry()
+{
+gpg --no-options "$1"
+}
+
+
+
+###### More advanced encryption / decryption
+# example: "encrypt filename" or "decrypt filename"
+function encrypt()
+{
+# Author: Martin Langasek <cz4160@gmail.com>
+case $LANG in
+  cs* )
+    err_title="Chyba"
+    err_files="Neoznačen soubor"
+    encrypt="Šifrovat"
+    decrypt="Dešifrovat"
+    file_msg="soubor:"
+    pass_msg="Vložte heslo";;
+  * )
+    err_title="Error"
+    err_files="No file selected"
+    encrypt="Encrypt"
+    decrypt="Decrypt"
+    file_msg="file:"
+    pass_msg="Enter passphrase";;
+esac
+if [ "$1" != "" ]
+then
+  i=1
+  file=`echo "$1" | sed ''$i'!d'`
+  while [ "$file" != "" ]
+  do
+    ext=`echo "$file" | grep [.]gpg$ 2>&1`
+    if [ "$ext" != "" ]
+    then
+      pass_decrypt=`zenity --entry --entry-text "$pass_decrypt" --hide-text --title "$pass_msg" --text "$decrypt $file_msg ${file##*/}" "" 2>&1`
+      if [ "$pass_decrypt" != "" ]
+      then
+        output=${file%.*}
+        echo "$pass_decrypt" | gpg -o "$output" --batch --passphrase-fd 0 -d "$file"
+      fi
+    else
+      pass_encrypt=`zenity --entry --hide-text --entry-text "$pass_encrypt" --title "$pass_msg" --text "$encrypt $file_msg ${file##*/}" "" 2>&1`
+      if [ "$pass_encrypt" != "" ]
+      then
+        echo "$pass_encrypt" | gpg --batch --passphrase-fd 0 --cipher-algo aes256 -c "$file"
+      fi
+    fi
+    i=$(($i+1))
+    file=`echo "$1" | sed ''$i'!d'`
+  done
+else
+  zenity --error --title "$err_title" --text "$err_files"
+fi
+}
+
+
+
+alias decrypt='encrypt'
+
+
+###### rot13 ("rotate alphabet 13 places" Caesar-cypher encryption)
+function rot13()
+{
+    if [ $# -lt 1 ] || [ $# -gt 1 ]; then
+        echo "Seriously?  You don't know what rot13 does?"
+    else
+        echo $@ | tr A-Za-z N-ZA-Mn-za-m
+    fi
+}
+
+
+
+###### rot47 ("rotate ASCII characters from '!" to '~' 47 places" Caesar-cypher encryption)
+function rot47()
+{
+    if [ $# -lt 1 ] || [ $# -gt 1 ]; then
+        echo "Seriously?  You don't know what rot47 does?"
+    else
+        echo $@ | tr '!-~' 'P-~!-O'
+    fi
+}
+
+
+
+
+
+##################################################
+# Google stuff           #
+##################################################
+
+###### convert currencies
+# usage:  currency_convert 1 usd eur
+# for currency shorthand: http://www.xe.com/currency/
+function currency_convert() { wget -qO- "http://www.google.com/finance/converter?a=$1&from=$2&to=$3&hl=es" | sed '/res/!d;s/<[^>]*>//g'; }
+
+
+
+function currency_convert_() { curl "http://www.xe.com/wap/2co/convert.cgi?Amount=$1&From=$2&To=$3" -A "Mozilla" -s | sed -n "s/.*>\(.*\) $3<.*/\1/p"; }
+
+
+
+function currency_convert_help() {
+cat <<EOF
+AED - Emirati Dirham
+AFN - Afghan Afghani
+ALL - Albanian Lek
+AMD - Armenian Dram
+ANG - Dutch Guilder
+AOA - Angolan Kwanza
+ARS - Argentine Peso
+AUD - Australian Dollar
+AWG - Aruban or Dutch Guilder
+AZN - Azerbaijani New Manat
+BAM - Bosnian Convertible Marka
+BBD - Barbadian or Bajan Dollar
+BDT - Bangladeshi Taka
+BGN - Bulgarian Lev
+BHD - Bahraini Dinar
+BIF - Burundian Franc
+BMD - Bermudian Dollar
+BND - Bruneian Dollar
+BOB - Bolivian Boliviano
+BRL - Brazilian Real
+BSD - Bahamian Dollar
+BTN - Bhutanese Ngultrum
+BWP - Batswana Pula
+BYR - Belarusian Ruble
+BZD - Belizean Dollar
+CAD - Canadian Dollar
+CDF - Congolese Franc
+CHF - Swiss Franc
+CLP - Chilean Peso
+CNY - Chinese Yuan Renminbi
+COP - Colombian Peso
+CRC - Costa Rican Colon
+CUC - Cuban Convertible Peso
+CUP - Cuban Peso
+CVE - Cape Verdean Escudo
+CZK - Czech Koruna
+DJF - Djiboutian Franc
+DKK - Danish Krone
+DOP - Dominican Peso
+DZD - Algerian Dinar
+EEK - Estonian Kroon
+EGP - Egyptian Pound
+ERN - Eritrean Nakfa
+ETB - Ethiopian Birr
+EUR - Euro
+FJD - Fijian Dollar
+FKP - Falkland Island Pound
+GBP - British Pound
+GEL - Georgian Lari
+GGP - Guernsey Pound
+GHS - Ghanaian Cedi
+GIP - Gibraltar Pound
+GMD - Gambian Dalasi
+GNF - Guinean Franc
+GTQ - Guatemalan Quetzal
+GYD - Guyanese Dollar
+HKD - Hong Kong Dollar
+HNL - Honduran Lempira
+HRK - Croatian Kuna
+HTG - Haitian Gourde
+HUF - Hungarian Forint
+IDR - Indonesian Rupiah
+ILS - Israeli Shekel
+IMP - Isle of Man Pound
+INR - Indian Rupee
+IQD - Iraqi Dinar
+IRR - Iranian Rial
+ISK - Icelandic Krona
+JEP - Jersey Pound
+JMD - Jamaican Dollar
+JOD - Jordanian Dinar
+JPY - Japanese Yen
+KES - Kenyan Shilling
+KGS - Kyrgyzstani Som
+KHR - Cambodian Riel
+KMF - Comoran Franc
+KPW - Korean Won
+KRW - Korean Won
+KWD - Kuwaiti Dinar
+KYD - Caymanian Dollar
+KZT - Kazakhstani Tenge
+LAK - Lao or Laotian Kip
+LBP - Lebanese Pound
+LKR - Sri Lankan Rupee
+LRD - Liberian Dollar
+LSL - Basotho Loti
+LTL - Lithuanian Litas
+LVL - Latvian Lat
+LYD - Libyan Dinar
+MAD - Moroccan Dirham
+MDL - Moldovan Leu
+MGA - Malagasy Ariary
+MKD - Macedonian Denar
+MMK - Burmese Kyat
+MNT - Mongolian Tughrik
+MOP - Macau Pataca
+MRO - Mauritian Ouguiya
+MUR - Mauritian Rupee
+MVR - Maldivian Rufiyaa
+MWK - Malawian Kwacha
+MXN - Mexican Peso
+MYR - Malaysian Ringgit
+MZN - Mozambican Metical
+NAD - Namibian Dollar
+NGN - Nigerian Naira
+NIO - Nicaraguan Cordoba
+NOK - Norwegian Krone
+NPR - Nepalese Rupee
+NZD - New Zealand Dollar
+OMR - Omani Rial
+PAB - Panamanian Balboa
+PEN - Peruvian Nuevo Sol
+PGK - Papua New Guinean Kina
+PHP - Philippine Peso
+PKR - Pakistani Rupee
+PLN - Polish Zloty
+PYG - Paraguayan Guarani
+QAR - Qatari Riyal
+RON - Romanian New Leu
+RSD - Serbian Dinar
+RUB - Russian Ruble
+RWF - Rwandan Franc
+SAR - Saudi or Saudi Arabian Riyal
+SBD - Solomon Islander Dollar
+SCR - Seychellois Rupee
+SDG - Sudanese Pound
+SEK - Swedish Krona
+SGD - Singapore Dollar
+SHP - Saint Helenian Pound
+SLL - Sierra Leonean Leone
+SOS - Somali Shilling
+SPL - Seborgan Luigino
+SRD - Surinamese Dollar
+STD - Sao Tomean Dobra
+SVC - Salvadoran Colon
+SYP - Syrian Pound
+SZL - Swazi Lilangeni
+THB - Thai Baht
+TJS - Tajikistani Somoni
+TMT - Turkmenistani Manat
+TND - Tunisian Dinar
+TOP - Tongan Pa'anga
+TRY - Turkish Lira
+TTD - Trinidadian Dollar
+TVD - Tuvaluan Dollar
+TWD - Taiwan New Dollar
+TZS - Tanzanian Shilling
+UAH - Ukrainian Hryvna
+UGX - Ugandan Shilling
+USD - US Dollar
+UYU - Uruguayan Peso
+UZS - Uzbekistani Som
+VEF - Venezuelan Bolivar Fuerte
+VND - Vietnamese Dong
+VUV - Ni-Vanuatu Vatu
+WST - Samoan Tala
+XAF - Central African CFA Franc BEAC
+XCD - East Caribbean Dollar
+XDR - IMF Special Drawing Rights
+XOF - CFA Franc
+XPF - CFP Franc
+YER - Yemeni Rial
+ZAR - South African Rand
+ZMK - Zambian Kwacha
+ZWD - Zimbabwean Dollar
+EOF
+}
+
+
+
+###### define a word - USAGE: define dog
+function define() {
+  local LNG=$(echo $LANG | cut -d '_' -f 1)
+  local CHARSET=$(echo $LANG | cut -d '.' -f 2)
+  lynx -accept_all_cookies -dump -hiddenlinks=ignore -nonumbers -assume_charset="$CHARSET" -display_charset="$CHARSET" "http://www.google.com/search?hl=${LNG}&q=define%3A+${1}&btnG=Google+Search" | grep -m 5 -C 2 -A 5 -w "*" > /tmp/define
+  if [ ! -s /tmp/define ]; then
+    echo "Sorry, google doesn't know this one..."
+    rm -f /tmp/define
+    return 1
+  else
+    cat /tmp/define | grep -v Search
+    echo ""
+  fi
+  rm -f /tmp/define
+  return 0
+}
+
+
+
+###### detect language of a string
+function detectlanguage() { curl -s "http://ajax.googleapis.com/ajax/services/language/detect?v=2.0&q=$@" | sed 's/{"responseData": {"language":"\([^"]*\)".*/\1\n/'; }
+
+
+
+###### find a location's coordinates
+# usage:  findlocation "Las Vegas, Nevada" = coordinates: [ -115.1728160, 36.1146460, 0 ]
+function findlocation() { place=`echo $1 | sed 's/ /%20/g'` ; curl -s "http://maps.google.com/maps/geo?output=json&oe=utf-8&q=$place" | grep -e "address" -e "coordinates" | sed -e 's/^ *//' -e 's/"//g' -e 's/address/Full Address/';}
+
+
+
+###### your GeoIP location on Google Maps
+function geoipme()
+{
+curl -s http://geoiplookup.wikimedia.org/|awk -F, '{print $3,$4}'|awk -F'"' '{print "http://maps.google.com/maps?q="$4 "," $8}'
+}
+
+
+
+###### Google search (example: google dog)
+function google() {
+firefox "http://www.google.com/search?&num=100&q=${@}" &
+}
+
+
+
+###### Google chart
+function google_chart()
+{
+wget -O chart.png 'http://chart.googleapis.com/chart?chs=250x100&chd=t:60,40&cht=p3&chl=Hello|World'
+}
+
+
+###### Google search (example: google dog)
+function google-fonts() {
+# Google-Fonts.sh
+# Version:    0.1
+# Last modified:  04 November 2011
+# License:    GPLv3+
+# Creator:    Inameiname
+#
+# Credit also goes to Michalis Georgiou
+# <mechmg93@gmail.com> for his original
+# google-font script and to Andrew
+# http://www.webupd8.org <andrew@webupd8.org> for
+# his further modification of it.
+#
+# Descripton:
+# For those who want an extremely easy method to
+# download and install the entire Google font
+# repository.
+###### Installation of Mercurial Needed for Downloading of Fonts ######
+sudo apt-get install mercurial
+###### Setting of Default Directories ######
+_hgroot="https://googlefontdirectory.googlecode.com/hg/"
+_hgrepo="googlefontdirectory"
+_hgoutdir="google-fonts"
+###### Google Font Choice Decision ######
+echo "
+"
+echo -n "What do you want to do with the fonts from Google
+once they are downloaded?:
+
+(1)  Download Only (and keep all fonts in a single folder)
+(2)  Download Only (and keep all fonts in separate folders (pure hg copy))
+(3)  Download and Install
+
+Press 'Enter' for default (default is '1')...
+
+"
+read GOOGLE_FONT_CHOICE
+###### Actual Downloading of the Google Fonts ######
+if [ ! -d $HOME/$_hgrepo ] ; then
+echo "
+"
+echo "Connecting to Mercurial server...."
+if [ -d $HOME/$_hgrepo ] ; then
+  cd $HOME/$_hgrepo
+  hg pull -u || return 1
+  echo "The local files have been updated."
+  cd ..
+else
+  hg clone $_hgroot $HOME/$_hgrepo || return 1
+fi
+echo "Mercurial checkout done or server timeout"
+echo "
+"
+else
+echo "The directory $HOME/$_hgrepo already exists."
+echo ""
+echo "No need to redownload all of the Google fonts."
+fi
+###### Google Font Choice Selection ######
+###### default
+if [[ -z $GOOGLE_FONT_CHOICE ]] ; then
+  # If no file passed, default to 1
+  mkdir -p $HOME/$_hgoutdir/
+  find $HOME/$_hgrepo/ -name "*.ttf"|xargs -I{} bash -c "cp -rf \"{}\" $HOME/$_hgoutdir/"
+  rm -rf $HOME/$_hgrepo/
+fi
+###### preset
+if [[ $GOOGLE_FONT_CHOICE = 1 ]] ; then
+  mkdir -p $HOME/$_hgoutdir/
+  find $HOME/$_hgrepo/ -name "*.ttf"|xargs -I{} bash -c "cp -rf \"{}\" $HOME/$_hgoutdir/"
+  rm -rf $HOME/$_hgrepo/
+fi
+if [[ $GOOGLE_FONT_CHOICE = 2 ]] ; then
+  mv $HOME/$_hgrepo/ $HOME/$_hgoutdir/
+fi
+if [[ $GOOGLE_FONT_CHOICE = 3 ]] ; then
+  sudo mkdir -p /usr/share/fonts/truetype/google-fonts/
+  find $HOME/$_hgrepo/ -name "*.ttf" -exec sudo install -m644 {} /usr/share/fonts/truetype/google-fonts/ \; || return 1
+  fc-cache -f > /dev/null
+  rm -rf $HOME/$_hgrepo/
+fi
+###### Wrap Up ######
+echo "
+"
+echo "done."
+echo "
+"
+read -sn 1 -p "You have finished downloading/installing all the Google Fonts currently available. Press any key to finish...
+"
+}
+
+
+
+###### get Google PageRank
+function pagerank()
+{
+curl pagerank.bz/$1
+}
+
+###### translate a word using Google
+# usage: translate <phrase> <output-language>
+# example: translate "hello" es = hola (will auto-detect source language)
+# for a list of language codes: http://en.wikipedia.org/wiki/List_of_ISO_639-1_codes
+function translate() { wget -qO- "http://ajax.googleapis.com/ajax/services/language/translate?v=1.0&q=$1&langpair=%7C${2:-en}" | sed 's/.*{"translatedText":"\([^"]*\)".*/\1\n/'; }
+
+
+
+function translate_help() {
+cat <<EOF
+Language  ISO
+(Afan) Oromo  om
+Abkhazian ab
+Afar    aa
+Afrikaans af
+Albanian  sq
+Amharic   am
+Arabic    ar
+Armenian  hy
+Assamese  as
+Aymara    ay
+Azerbaijani az
+Bashkir   ba
+Basque    eu
+Bengali   bn
+Bhutani   dz
+Bihari    bh
+Bislama   bi
+Breton    br
+Bulgarian bg
+Burmese   my
+Byelorussian  be
+Cambodian km
+Catalan   ca
+Chinese   zh
+Corsican  co
+Croatian  hr
+Czech   cs
+Danish    da
+Dutch   nl
+English   en
+Esperanto eo
+Estonian  et
+Faeroese  fo
+Fiji    fj
+Finnish   fi
+French    fr
+Frisian   fy
+Galician  gl
+Georgian  ka
+German    de
+Greek   el
+Greenlandic kl
+Guarani   gn
+Gujarati  gu
+Hausa   ha
+Hebrew    he
+(former iw)
+Hindi   hi
+Hungarian hu
+Icelandic is
+Indonesian  id
+(former in)
+Interlingua ia
+Interlingue ie
+Inupiak   ik
+Inuktitut   iu
+(Eskimo)
+Irish   ga
+Italian   it
+Japanese  ja
+Javanese  jw
+Kannada   kn
+Kashmiri  ks
+Kazakh    kk
+Kinyarwanda rw
+Kirghiz   ky
+Kirundi   rn
+Korean    ko
+Kurdish   ku
+Laothian  lo
+Latin   la
+Latvian,  lv
+Lettish
+Lingala   ln
+Lithuanian  lt
+Macedonian  mk
+Malagasy  mg
+Malay   ms
+Malayalam ml
+Maltese   mt
+Maori   mi
+Marathi   mr
+Moldavian mo
+Mongolian mn
+Nauru   na
+Nepali    ne
+Norwegian no
+Occitan   oc
+Oriya   or
+Pashto, Pushto  ps
+Persian   fa
+Polish    pl
+Portuguese  pt
+Punjabi   pa
+Quechua   qu
+Rhaeto-Romance  rm
+Romanian  ro
+Russian   ru
+Samoan    sm
+Sangro    sg
+Sanskrit  sa
+Scots Gaelic  gd
+Serbian   sr
+Serbo-Croatian  sh
+Sesotho   st
+Setswana  tn
+Shona   sn
+Sindhi    sd
+Singhalese  si
+Siswati   ss
+Slovak    sk
+Slovenian sl
+Somali    so
+Spanish   es
+Sudanese  su
+Swahili   sw
+Swedish   sv
+Tagalog   tl
+Tajik   tg
+Tamil   ta
+Tatar   tt
+Tegulu    te
+Thai    th
+Tibetan   bo
+Tigrinya  ti
+Tonga   to
+Tsonga    ts
+Turkish   tr
+Turkmen   tk
+Twi   tw
+Uigur   ug
+Ukrainian uk
+Urdu    ur
+Uzbek   uz
+Vietnamese  vi
+Volapuk   vo
+Welch   cy
+Wolof   wo
+Xhosa   xh
+Yiddish   yi
+(former ji)
+Yoruba    yo
+Zhuang    za
+Zulu    zu
+EOF
+}
+
+##################################################
+# Surround lines with quotes (useful in pipes)   #
+# - from mervTormel        #
+##################################################
+
+function enquote() { /usr/bin/sed 's/^/"/;s/$/"/' ; }
+
+
+##################################################
+# URLs ...           #
+##################################################
+
+###### expand shortened URLs
+function expandurl() { curl -sIL $1 2>&1 | awk '/^Location/ {print $2}' | tail -n1; }
+
+
+
+###### short URLs with is.gd
+function isgd() { /usr/bin/wget -qO - "http://is.gd/create.php?format=simple&url=$1" ;}
+
+
+
+###### resolve short URLs
+function resolve() { curl -Is $1 | sed -n 's/^Location: //p'; }
+
+
+##################################################
+# Passwording          #
+##################################################
+
+###### fake name and pass
+function fakepass()
+{
+  local l=8
+  [ -n "$1" ] && l=$1
+  dd if=/dev/urandom count=1 2> /dev/null | uuencode -m - | head -n 2 | tail -n 1 | cut -c $l
+}
+
+
+###### generate a random password
+#   $1 = number of characters; defaults to 32
+#   $2 = include special characters; 1 = yes, 0 = no; defaults to 1
+
+function randompw() {
+  if [[ $2 == "!" ]]; then
+    echo $(cat /dev/urandom | tr -cd '[:graph:]' | head -c ${1:-32})
+  else  echo $(cat /dev/urandom | tr -cd '[:alnum:]' | head -c ${1:-32})
+  fi
+}
+
+
+###### generate a random left-hand password
+alias randompwl='</dev/urandom tr -dc '12345!@#$%qwertQWERTasdfgASDFGzxcvbZXCVB' | head -c8; echo ""'
+
+
+
+###### generate a unique and secure password for every website that you login to
+function sitepass() { echo -n "$@" |  md5sum | sha1sum | sha224sum | sha256sum | sha384sum | sha512sum | gzip - | strings -n 1 | tr -d "[:space:]"  | tr -s '[:print:]' | tr '!-~' 'P-~!-O' | rev | cut -b 2-11; history -d $(($HISTCMD-1)); }
+
+
+
+###### generates a unique and secure password with SALT for every website that you login to
+function sitepass2()
+{
+salt="this_salt";pass=`echo -n "$@"`;for i in {1..500};do pass=`echo -n $pass$salt|sha512sum`;done;echo$pass|gzip -|strings -n 1|tr -d "[:space:]"|tr -s '[:print:]' |tr '!-~' 'P-~!-O'|rev|cut -b 2-15;history -d $(($HISTCMD-1));
+}
+
+
+###### trunc  password
+function trunc_pwd()
+
+{
+  case $1 in
+    *help )
+      echo -e "\n${ewhite}Usage:\n"
+      echo -e "${eorange}trunc_pwd ${ewhite}|${egreen} ! no options !\n"
+      tput sgr0
+    ;;
+    * )
+      pwdmaxlen=$(get_key pwdmaxlength)
+      trunc_symbol=$(get_key pwdchar)
+      dirchar=$(get_key dirchar)
+      newsepacolor=$(echo $sepacolor | sed -e 's/\\\[//g' -e 's/\\\]//g')
+      newwdircolor=$(echo $wdircolor | sed -e 's/\\\[//g' -e 's/\\\]//g')
+      newpscoloror=$(echo $pscolor | sed -e 's/\\\[//g' -e 's/\\\]//g')
+      if [ ${#PWD} -gt $pwdmaxlen ]; then
+        pwdoffset=$(( ${#PWD} - $pwdmaxlen ))
+        if [[ $pstyle_supported == true ]]; then
+          xPWD="$newpscoloror${trunc_symbol}${PWD:$pwdoffset:$pwdmaxlen}"
+        else  xPWD="${trunc_symbol}${PWD:$pwdoffset:$pwdmaxlen}"
+        fi
+        if [[ $enabcol == true && $pstyle_supported == true ]]; then
+          newPWD="${xPWD//\//$newsepacolor$dirchar$newwdircolor}"
+        else  newPWD="${xPWD//\//$dirchar}"
+        fi
+      else
+        if [[ $enabcol == true && $pstyle_supported == true ]]; then
+        newPWD="${PWD//\//$newsepacolor$dirchar$newwdircolor}"
+      else  newPWD="${PWD//\//$dirchar}"
+      fi
+      fi
+      echo -e $newPWD
+    ;;
+  esac
+}
+
+
+
+##################################################
+# Progress visuals         #
+##################################################
+
+###### display animated hourglass in the shell to indicate ongoing processing
+function hourglass() { s=$(($SECONDS +${1:-10}));(tput civis;while [[ $SECONDS -lt $s ]];do for f in '|' ' ' '\-' /;do echo -n $f&&sleep .2s&&tput cub1;done;done);tput cnorm; }
+
+
+###### pretty
+
+function progressbar()
+
+{
+  SP_COLOUR="\e[37;44m"
+  SP_WIDTH=5.5
+  SP_DELAY=0.2
+  SP_STRING=${2:-"'|/=\'"}
+  while [ -d /proc/$1 ]
+  do
+    printf "$SP_COLOUR\e7  %${SP_WIDTH}s  \e8\e[01;37m" "$SP_STRING"
+    sleep ${SP_DELAY:-.2}
+    SP_STRING=${SP_STRING#"${SP_STRING%?}"}${SP_STRING%?}
+  done
+  tput sgr0
+}
+
+
+
+###### please wait...
+
+function spanner() {
+  PROC=$1;COUNT=0
+  echo -n "Please wait "
+  while [ -d /proc/$PROC ];do
+    while [ "$COUNT" -lt 10 ];do
+      echo -ne '\x08  ' ; sleep 0.1
+      ((COUNT++))
+    done
+    until [ "$COUNT" -eq 0 ];do
+      echo -ne '\x08\x08 ' ; sleep 0.1
+      ((COUNT -= 1))
+    done
+  done
+}
+
+
+
+function spin() {
+
+        echo -n "|/     |"
+        while [ -d /proc/$1 ]
+        do
+        # moving right
+        echo -ne "\b\b\b\b\b\b\b-     |"
+        sleep .05
+        echo -ne "\b\b\b\b\b\b\b\\     |"
+        sleep .05
+        echo -ne "\b\b\b\b\b\b\b|     |"
+        sleep .05
+        echo -ne "\b\b\b\b\b\b\b /    |"
+        sleep .05
+        echo -ne "\b\b\b\b\b\b-    |"
+        sleep .05
+        echo -ne "\b\b\b\b\b\b\\    |"
+        sleep .05
+        echo -ne "\b\b\b\b\b\b|    |"
+        sleep .05
+        echo -ne "\b\b\b\b\b\b /   |"
+        sleep .05
+        echo -ne "\b\b\b\b\b-   |"
+        sleep .05
+        echo -ne "\b\b\b\b\b\\   |"
+        sleep .05
+        echo -ne "\b\b\b\b\b|   |"
+        sleep .05
+        echo -ne "\b\b\b\b\b /  |"
+        sleep .05
+        echo -ne "\b\b\b\b-  |"
+        sleep .05
+        echo -ne "\b\b\b\b\\  |"
+        sleep .05
+        echo -ne "\b\b\b\b|  |"
+        sleep .05
+        echo -ne "\b\b\b\b / |"
+        sleep .05
+        echo -ne "\b\b\b- |"
+        sleep .05
+        echo -ne "\b\b\b\\ |"
+        sleep .05
+        echo -ne "\b\b\b| |"
+        sleep .05
+        echo -ne "\b\b\b /|"
+        sleep .05
+        echo -ne "\b\b-|"
+        sleep .05
+        echo -ne "\b\b\\|"
+        sleep .05
+        echo -ne "\b\b||"
+        sleep .05
+        echo -ne "\b\b/|"
+        sleep .05
+        # moving left
+        echo -ne "\b\b||"
+        sleep .05
+        echo -ne "\b\b\\|"
+        sleep .05
+        echo -ne "\b\b-|"
+        sleep .05
+        echo -ne "\b\b\b/ |"
+        sleep .05
+        echo -ne "\b\b\b| |"
+        sleep .05
+        echo -ne "\b\b\b\\ |"
+        sleep .05
+        echo -ne "\b\b\b- |"
+        sleep .05
+        echo -ne "\b\b\b\b/  |"
+        sleep .05
+        echo -ne "\b\b\b\b|  |"
+        sleep .05
+        echo -ne "\b\b\b\b\\  |"
+        sleep .05
+        echo -ne "\b\b\b\b-  |"
+        sleep .05
+        echo -ne "\b\b\b\b\b/   |"
+        sleep .05
+        echo -ne "\b\b\b\b\b|   |"
+        sleep .05
+        echo -ne "\b\b\b\b\b\\   |"
+        sleep .05
+        echo -ne "\b\b\b\b\b-   |"
+        sleep .05
+        echo -ne "\b\b\b\b\b\b/    |"
+        sleep .05
+        echo -ne "\b\b\b\b\b\b|    |"
+        sleep .05
+        echo -ne "\b\b\b\b\b\b\\    |"
+        sleep .05
+        echo -ne "\b\b\b\b\b\b-    |"
+        sleep .05
+        echo -ne "\b\b\b\b\b\b\b/     |"
+        sleep .05
+        done
+  echo -e "\b\b\b\b\b\b\b\b\b|=======| done!"
+}
+
+
+
+function spinner()
+
+{
+  PROC=$1
+  while [ -d /proc/$PROC ];do
+    echo -ne '\e[01;32m/\x08' ; sleep 0.05
+    echo -ne '\e[01;32m-\x08' ; sleep 0.05
+    echo -ne '\e[01;32m\\\x08' ; sleep 0.05
+    echo -ne '\e[01;32m|\x08' ; sleep 0.05
+  done
+}
+
+
+
+###### Display a progress process
+# To start the spinner2 function, you have to send the function
+# into the background. To stop the spinner2 function, you have
+# to define the argument "stop".
+# EXAMPLE:
+#    echo -n "Starting some daemon "; spinner2 &
+#    if sleep 10; then
+#       spinner2 "stop"; echo -e "\t[ OK ]"
+#    else
+#       spinner2 "stop"; echo -e "\t[ FAILED ]"
+#    fi
+function spinner2() {
+      local action=${1:-"start"}
+      declare -a sign=( "-" "/" "|" "\\\\" )
+      # define singnal file...
+      [ "$action" = "start" ] && echo 1 > /tmp/signal
+      [ "$action" = "stop" ] && echo 0 > /tmp/signal
+      while [ "$( cat /tmp/signal 2>/dev/null )" == "1" ] ; do
+          for (( i=0; i<${#sign[@]}; i++ )); do
+              echo -en "${sign[$i]}\b"
+              # with this command you can use millisecond as sleep time - perl rules ;-)
+              perl -e 'select( undef, undef, undef, 0.1 );'
+          done
+      done
+      # clear the last ${sign[$i]} sign at finish...
+      [ "$action" = "stop" ] && echo -ne " \b"
+}
+
+
+
+function working()
+
+{
+   while [ -d /proc/$1 ]
+   do
+  echo -ne "w      \b\b\b\b\b\b\b";sleep .08;
+  echo -ne "wo     \b\b\b\b\b\b\b";sleep .08;
+  echo -ne "wor    \b\b\b\b\b\b\b";sleep .08;
+  echo -ne "work   \b\b\b\b\b\b\b";sleep .08;
+  echo -ne "worki  \b\b\b\b\b\b\b";sleep .08;
+  echo -ne "workin \b\b\b\b\b\b\b";sleep .08;
+  echo -ne "working\b\b\b\b\b\b\b";sleep .08;
+  echo -ne " orking\b\b\b\b\b\b\b";sleep .08;
+  echo -ne "  rking\b\b\b\b\b\b\b";sleep .08;
+  echo -ne "   king\b\b\b\b\b\b\b";sleep .08;
+  echo -ne "    ing\b\b\b\b\b\b\b";sleep .08;
+  echo -ne "     ng\b\b\b\b\b\b\b";sleep .08;
+  echo -ne "      g\b\b\b\b\b\b\b";sleep .08;
+   done
+}
+
+
+
+##################################################
+# Resizing an image        #
+##################################################
+
+# USAGE: image_resize "percentage of image resize" "input image" "output image"
+function image_resize()
+{
+convert -sample "$1"%x"$1"% "$2" "$3"
+}

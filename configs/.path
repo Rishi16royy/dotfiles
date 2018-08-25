@@ -1,0 +1,4 @@
+# GO
+export PATH=$PATH:/usr/local/opt/go/libexec/bin
+# Brew
+export PATH=/usr/local/bin:/usr/local/sbin:~/bin:$PATH

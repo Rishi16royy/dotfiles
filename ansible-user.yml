@@ -1,0 +1,21 @@
+- hosts: all
+  user : jenkins
+  become: yes
+  become_user: root
+  tasks:
+  - name: create user
+    user:
+      name: mouli
+      groups:
+      - admins
+      - docker
+      state: present
+  - name: set  public key
+    authorized_key: user=mouli key="ssh-rsa AAAAB3NzaC1yc2EAAAABJQAAAQEAwoSzYurTTWPXZ4uF8B+4gZs3rb+mdOLA3ZOTozNIXnzqolj4/36dS76Ow7Ln8k3zwikXz+XrS0a0x777Br1xXcn2OWYMfOtR/wnnJe4ur/puRPSxw/cRMHcCaneeZuBquW46SBRaQ3cfWA0UWiNx8Dl9q+ueJcB7MDHbZeKHP6sl1zFtY0xs/lM9JNKcXKlGEAC/WX7DQNtqHiWTTHeab/UvxWjXM3JdA3CcdHrJ4zI8i3K6oyrS50PX+axBKPBBgPIbHrAQItFDIIHv1li8/lBruRk1tiZqECNLnjcEw5yC5VakYG3a5iXzJ7RypgbdcSpbbPLMBQMnYNtRy7LX9w=="
+  - git:
+      repo: 'https://github.com/SriMouli/dotfiles.git'
+      dest: /home/mouli/dotfiles
+      clone: yes
+      update: yes
+  - shell:  sudo chage -I -1 -m 0 -M 99999 -E -1 mouli
+  - shell:  sudo chgrp -R admins /var/log/kaarya/

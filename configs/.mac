@@ -1,0 +1,132 @@
+function cask-update() {
+
+(set -x; brew update;)
+
+(set -x; brew cleanup;)
+(set -x; brew cask cleanup;)
+
+red=`tput setaf 1`
+green=`tput setaf 2`
+reset=`tput sgr0`
+
+#casks=( $(brew cask list) )
+casks=( $(brew cask outdated --greedy | grep -v '(latest)') )
+for cask in ${casks[@]}
+do
+    echo upgrading $cask
+    brew cask upgrade --verbose $cask
+done
+}
+
+
+
+alias unhide='defaults write com.apple.finder AppleShowAllFiles YES && killall Finder'
+alias hide='defaults write com.apple.finder AppleShowAllFiles NO && killall Finder'
+alias update-mac='sudo softwareupdate -i -a'
+alias update='brew update --verbose'
+alias upgrade='brew upgrade --verbose'
+
+alias hidedesktop="defaults write com.apple.finder CreateDesktop -bool false && killall Finder"
+alias showdesktop="defaults write com.apple.finder CreateDesktop -bool true && killall Finder"
+alias mergepdf='/System/Library/Automator/Combine\ PDF\ Pages.action/Contents/Resources/join.py'
+# Disable Spotlight
+alias spotoff="sudo mdutil -a -i off"
+# Enable Spotlight
+alias spoton="sudo mdutil -a -i on"
+alias stfu="osascript -e 'set volume output muted true'"
+alias pumpitup="osascript -e 'set volume 7'"
+alias updatedb="/usr/libexec/locate.updatedb"
+
+
+ql () { qlmanage -p "$*" >& /dev/null; }    # ql:           Opens any file in MacOS Quicklook Preview
+
+
+alias yo='update-mac && update && upgrade && cask-update'
+
+
+# Files being opened
+alias files.open='sudo fs_usage -e -f filesystem|grep -v CACHE_HIT|grep -v grep|grep open'
+# Files used, anywhere on the filesystem
+alias files.usage='sudo fs_usage -e -f filesystem|grep -v CACHE_HIT|grep -v grep'
+# Files in use in the Users directory
+alias files.usage.user='sudo fs_usage -e -f filesystem|grep -v CACHE_HIT|grep -v grep|grep Users'
+
+# Lock the screen (when going AFK)
+alias afk="/System/Library/CoreServices/Menu\ Extras/User.menu/Contents/Resources/CGSession -suspend"
+
+# Flush the DNS on Mac
+alias dnsflush='dscacheutil -flushcache'
+
+# Empty the Trash on all mounted volumes and the main HDD.
+# Also, clear Apple’s System Logs to improve shell startup speed.
+# Finally, clear download history from quarantine. https://mths.be/bum
+alias emptytrash="sudo rm -rfv /Volumes/*/.Trashes; sudo rm -rfv ~/.Trash; sudo rm -rfv /private/var/log/asl/*.asl; sqlite3 ~/Library/Preferences/com.apple.LaunchServices.QuarantineEventsV* 'delete from LSQuarantineEvent'"
+
+alias ip="dig +short myip.opendns.com @resolver1.opendns.com"
+alias iplocal="ipconfig getifaddr en0"
+
+source `brew --prefix git`/etc/bash_completion.d/git-completion.bash
+
+eval "$(thefuck --alias)"
+archey -p -o
+
+
+# Kill all the tabs in Chrome to free up memory
+# [C] explained: http://www.commandlinefu.com/commands/view/402/exclude-grep-from-your-grepped-output-of-ps-alias-included-in-description
+alias chromekill="ps ux | grep '[C]hrome Helper --type=renderer' | grep -v extension-process | tr -s ' ' | cut -d ' ' -f2 | xargs kill"
+
+
+alias ydl='youtube-dl --external-downloader aria2c --external-downloader-args "-x16 -s16"'
+
+
+
+
+###### find an unused unprivileged TCP port
+function findtcp()
+{
+(netstat  -atn | awk '{printf "%s\n%s\n", $4, $4}' | grep -oE '[0-9]*$'; seq 32768 61000) | sort -n | uniq -u | head -n 1
+}
+
+
+
+###### anagrams
+function anagrams()
+{
+cat > "/tmp/anagrams.py" <<"End-of-message"
+#!/usr/bin/python
+infile = open ("/usr/share/dict/words", "r")
+## "dict" is a reserved word
+words_in = infile.readlines()
+scrambled = raw_input("Enter the scrambled word: ")
+scrambled = scrambled.lower()
+scrambled_list = list(scrambled)
+scrambled_list.sort()
+for word in words_in:
+    word_list = list(word.strip().lower())
+    word_list.sort()
+    ## you don't really have to compare lengths when using lists as the
+    ## extra compare takes about as long as finding the first difference
+    if word_list == scrambled_list:
+        print word, scrambled
+End-of-message
+chmod +x "/tmp/anagrams.py"
+"/tmp/anagrams.py" "$1"
+rm "/tmp/anagrams.py"
+}
+
+
+##################################################
+# Miscellaneous Fun        #
+##################################################
+
+function anagram_() { function s() { sed 's/[[:space:]]*//g;s/./\n\0/g'<<<"$@"|tr A-Z a-z|sort;};cmp -s <(s $1) <(s $2)||echo -n "not ";echo anagram; }
+
+
+
+###### random Cyanide and Happiness comics from explosm.net
+function cyanide() { display "$(wget -q http://explosm.net/comics/random/ -O - | grep -Po 'http://www.explosm.net/db/files/Comics/*/[^"]+(png|jpg|jpeg)')"; }
+
+# Use Mac OS Preview to open a man page in a more handsome format
+function manp() {
+  man -t $1 | open -f -a /Applications/Preview.app
+}
