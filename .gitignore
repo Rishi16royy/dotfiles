@@ -3,7 +3,6 @@
 .LSOverride
 # Thumbnails
 ._*
-id_rsa
 node_modules
 homedir/.vim/backup/*
 !homedir/.vim/backup/.gitignore
